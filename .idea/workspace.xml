@@ -16,7 +16,7 @@
           <file leaf-file-name="mainwindow.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/package/mainwindow.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="532">
+                <state relative-caret-position="17">
                   <caret line="430" column="33" selection-start-line="430" selection-start-column="33" selection-end-line="430" selection-end-column="33" />
                   <folding>
                     <element signature="e#0#16#0" expanded="true" />
@@ -63,7 +63,7 @@
             <entry file="file://$PROJECT_DIR$/package/mainwindow.py">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="353">
-                  <caret line="443" lean-forward="true" selection-start-line="443" selection-end-line="443" />
+                  <caret line="443" selection-start-line="443" selection-end-line="443" />
                   <folding>
                     <element signature="e#0#16#0" expanded="true" />
                   </folding>
@@ -83,7 +83,7 @@
           <file leaf-file-name="customdialog.py" pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/package/customdialog.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="3296">
+                <state relative-caret-position="3570">
                   <caret line="210" column="47" selection-start-line="210" selection-start-column="47" selection-end-line="210" selection-end-column="47" />
                   <folding>
                     <element signature="e#0#16#0" expanded="true" />
@@ -133,6 +133,9 @@
       <find>max_video</find>
     </findStrings>
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
@@ -157,6 +160,7 @@
     <option name="width" value="854" />
     <option name="height" value="1017" />
   </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
     <navigator proportions="" version="1">
       <foldersAlwaysOnTop value="true" />
@@ -253,12 +257,12 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1696" height="1026" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.12002412" />
       <window_info anchor="bottom" id="TODO" order="6" sideWeight="0.4933655" weight="0.2668919" />
       <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.4613993" side_tool="true" visible="true" weight="0.24211712" />
-      <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Version Control" order="7" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Python Console" order="7" />
       <window_info anchor="bottom" id="Run" order="2" sideWeight="0.53860074" weight="0.24211712" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -271,6 +275,7 @@
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Find" order="1" />
     </layout>
   </component>
   <component name="VcsContentAnnotationSettings">
@@ -591,7 +596,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/package/customdialog.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3296">
+        <state relative-caret-position="3570">
           <caret line="210" column="47" selection-start-line="210" selection-start-column="47" selection-end-line="210" selection-end-column="47" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
@@ -609,7 +614,7 @@
     <entry file="file://$PROJECT_DIR$/package/mainwindow.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="353">
-          <caret line="443" lean-forward="true" selection-start-line="443" selection-end-line="443" />
+          <caret line="443" selection-start-line="443" selection-end-line="443" />
           <folding>
             <element signature="e#0#16#0" expanded="true" />
           </folding>
