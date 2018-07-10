@@ -85,6 +85,7 @@ class ScreenDialog(QtGui.QDialog, screendialog_ui.Ui_screenDialog):
     def _set_labels(self):
         # Sets text for all labels, buttons, etc.
         self.labelScreenName.setText(constants.LABEL_LABEL_SCREEN_NAME)
+        self.labelMonNum.setText(constants.LABEL_LABEL_MONITOR_NUM)
         self.rbScreenVideo.setText(constants.LABEL_RB_SCREEN_VIDEO)
         self.rbScreenColor.setText(constants.LABEL_RB_SCREEN_COLOR)
         self.pbScreenVideo.setText(constants.LABEL_PB_SCREEN_VIDEO)
@@ -97,6 +98,12 @@ class ScreenDialog(QtGui.QDialog, screendialog_ui.Ui_screenDialog):
 
         elif self.context == constants.STATE_DIALOG_EDIT:
             self.setWindowTitle(constants.LABEL_SCREEN_DIALOG_TITLE_EDIT)
+
+        # Populate monitor listing
+        self.desktop = QtGui.QDesktopWidget()
+        self.cbMonNum.addItem(constants.LABEL_CB_MON_NUM_NA)
+        for mon_num in range(self.desktop.numScreens()):
+            self.cbMonNum.addItem("Monitor {}".format(mon_num))
 
     def _connect_signals(self):
         # Connects signals to all appropriate gui elements
@@ -145,6 +152,7 @@ class ScreenDialog(QtGui.QDialog, screendialog_ui.Ui_screenDialog):
     def populate(self, screen):
         # Fill gui elements with data from Screen object
         self.leScreenName.setText(screen.name)
+        self.cbMonNum.setCurrentIndex(self.cbMonNum.findText(screen.monitor))
         if type(screen) is svdevices.FlatScreen:
             self.rbScreenColor.click()
             self.leScreenColor.setText(screen.color)
@@ -190,22 +198,41 @@ class ViewDialog(QtGui.QDialog, viewdialog_ui.Ui_Dialog):
             QtCore.Qt.WindowMinMaxButtonsHint
         )
 
-        # Remove staying on top
-        """self.setWindowFlags(
-            self.windowFlags() &
-            QtCore.Qt.WindowStaysOnTopHint
-        )"""
+        # Maximize in monitor, if indicated
+        if (type(self.obj) is svdevices.FlatScreen or
+            type(self.obj) is svdevices.Video):
 
-        if type(self.obj) is svdevices.Video:
-            pass
+            if self.obj.monitor != constants.LABEL_CB_MON_NUM_NA:
 
-        elif type(self.obj) is svdevices.FlatScreen:
+                mon_num = int(self.obj.monitor[8:])
+                desktop = QtGui.QDesktopWidget()
+                monitor = desktop.screenGeometry(mon_num)
+                self.move(monitor.left(), monitor.height())
+                self.setWindowState(QtCore.Qt.WindowFullScreen)
+
+        # Color the window if it's a flat color screen
+        if type(self.obj) is svdevices.FlatScreen:
             self.setStyleSheet(
                 "QWidget { background-color: %s }" % self.obj.color
             )
 
     def _connect_signals(self):
         pass
+
+    def keyPressEvent(self, event):
+        # Handles fullscreen functionality
+        if (event.key() == QtCore.Qt.Key_Escape or
+                event.key() == QtCore.Qt.Key_Return or
+                event.key() == QtCore.Qt.Key_Enter or
+                event.key() == QtCore.Qt.Key_Space):
+
+            if self.isFullScreen():
+                self.setWindowState(QtCore.Qt.WindowMaximized)
+
+            else:
+                self.setWindowState(QtCore.Qt.WindowFullScreen)
+
+            event.accept()
 
     def closeEvent(self, event):
         # Update MainWindow dict before closing

@@ -22,8 +22,6 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
         self.view_dialogs = {}
         self.max_video_length = 0
 
-        sys.path.append("./")
-
         self._create_icons()
         self._set_labels()
         self._set_default_gui_state()
@@ -243,12 +241,16 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
             return False
 
         elif type(new_obj) is svdevices.Video and \
-                (new_obj.name == "" or new_obj.link == ""):
+                (new_obj.name == "" or
+                 new_obj.link == "" or
+                new_obj.monitor == ""):
             self.show_dialog_blank_fields()
             return False
 
         elif type(new_obj) is svdevices.FlatScreen and \
-                (new_obj.name == "" or new_obj.color == ""):
+                (new_obj.name == "" or
+                 new_obj.color == "" or
+                new_obj.monitor == ""):
             self.show_dialog_blank_fields()
             return False
 
@@ -311,6 +313,8 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
     def _del_view_dialog(self, name):
         # Helper function to connect to dialog.finished() signals
         del self.view_dialogs[name]
+        if self.state == constants.STATE_MW_RUN:
+            self.toggle_run()
         self._update_max_dur()
         self.refresh_tab_buts()
 
@@ -389,7 +393,6 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
         if output is not None:
             output.release()
 
-    # TODO: VideoWriter isn't opening in executable distribution
     def _get_video_writer(self, cam):
         # Generates VideoWriter object for saving camera feed frames
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -410,7 +413,6 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
              int(cam.resolution.split("x")[1])),
             isColor=True
         )
-        print(output.isOpened())
         return output
 
     def _handle_video(self, media_obj, **kwargs):
@@ -646,7 +648,7 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
             new_cam = svdevices.Camera(
                 dialog.leCamName.text(),
                 dialog.cbCamLink.currentText(),
-                dialog.cbCamRes.currentText()
+                dialog.cbCamRes.currentText(),
             )
             # Check that given data is valid
             if self._valid_add(new_cam):
@@ -659,13 +661,23 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
 
     def edit_cam(self):
         dialog = customdialog.CamDialog(constants.STATE_DIALOG_EDIT)
-        dialog.populate(self.cams[self.lwCam.currentRow()])
+        cam_pos = self.lwCam.currentRow()
+        cam = self.screens[cam_pos]
+        self.screens.pop(cam_pos)
+        dialog.populate(cam)
         if dialog.exec_():
-            self.cams[self.lwCam.currentRow()] = svdevices.Camera(
+            new_cam = svdevices.Camera(
                 dialog.leCamName.text(),
                 dialog.cbCamLink.currentText(),
                 dialog.cbCamRes.currentText()
             )
+
+            if self._valid_add(new_cam):
+                self.cams.insert(cam_pos, new_cam)
+
+            else:
+                self.cams.insert(cam_pos, cam)
+                self.edit_cam()
 
         self.refresh_gui()
 
@@ -689,13 +701,15 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
             if dialog.rbScreenColor.isChecked():
                 new_screen = svdevices.FlatScreen(
                     dialog.leScreenName.text(),
-                    dialog.leScreenColor.text()
+                    dialog.leScreenColor.text(),
+                    monitor=dialog.cbMonNum.currentText()
                 )
 
             elif dialog.rbScreenVideo.isChecked():
                 new_screen = svdevices.Video(
                     dialog.leScreenName.text(),
-                    dialog.leScreenVideo.text()
+                    dialog.leScreenVideo.text(),
+                    monitor=dialog.cbMonNum.currentText()
                 )
 
             if self._valid_add(new_screen):
@@ -708,20 +722,33 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
 
     def edit_screen(self):
         dialog = customdialog.ScreenDialog(constants.STATE_DIALOG_EDIT)
-        dialog.populate(self.screens[self.lwScreen.currentRow()])
+        screen_pos = self.lwScreen.currentRow()
+        screen = self.screens[screen_pos]
+        self.screens.pop(screen_pos)
+        dialog.populate(screen)
         if dialog.exec_():
             if dialog.rbScreenColor.isChecked():
-                self.screens[self.lwScreen.currentRow()] = \
+                new_screen = \
                     svdevices.FlatScreen(
                         dialog.leScreenName.text(),
-                        dialog.leScreenColor.text()
+                        dialog.leScreenColor.text(),
+                        monitor=dialog.cbMonNum.currentText()
                     )
 
             elif dialog.rbScreenVideo.isChecked():
-                self.screens[self.lwScreen.currentRow()] = svdevices.Video(
+                new_screen = svdevices.Video(
                         dialog.leScreenName.text(),
-                        dialog.leScreenVideo.text()
+                        dialog.leScreenVideo.text(),
+                    monitor=dialog.cbMonNum.currentText()
                     )
+
+            if self._valid_add(new_screen):
+                self.screens.insert(screen_pos, new_screen)
+
+            else:
+                self.screens.insert(screen_pos, screen)
+                self.edit_screen()
+
         self.refresh_gui()
 
     # Add setting to maximize and assign to monitor
