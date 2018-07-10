@@ -5,10 +5,11 @@ import cv2
 import svdevices
 from threadworker import Worker
 from ui import mainwindow_ui
-from moviepy.editor import VideoFileClip
+from moviepy.video.io.VideoFileClip import VideoFileClip
 from PyQt4 import QtGui, QtCore
 from PyQt4.phonon import Phonon
 import numpy as np
+import sys
 import time
 
 
@@ -20,6 +21,8 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
         self.cams, self.screens, self.devs = [], [], []
         self.view_dialogs = {}
         self.max_video_length = 0
+
+        sys.path.append("./")
 
         self._create_icons()
         self._set_labels()
@@ -305,7 +308,6 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
         for name, dialog in self.view_dialogs.items():
             dialog.close()
 
-    # TODO: When screen is closed, update max video duration
     def _del_view_dialog(self, name):
         # Helper function to connect to dialog.finished() signals
         del self.view_dialogs[name]
@@ -387,9 +389,10 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
         if output is not None:
             output.release()
 
+    # TODO: VideoWriter isn't opening in executable distribution
     def _get_video_writer(self, cam):
         # Generates VideoWriter object for saving camera feed frames
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
         output_loc = self.leOutput.text()
         output_fn = "{}_SIDEVIEW_CAM_{}".format(
             int(time.time()),
@@ -407,6 +410,7 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
              int(cam.resolution.split("x")[1])),
             isColor=True
         )
+        print(output.isOpened())
         return output
 
     def _handle_video(self, media_obj, **kwargs):
@@ -720,6 +724,7 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
                     )
         self.refresh_gui()
 
+    # Add setting to maximize and assign to monitor
     def open_screen(self):
         # Initializes screen with selected screen object, opens thread
         # when run

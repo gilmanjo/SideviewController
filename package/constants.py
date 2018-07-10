@@ -90,4 +90,4 @@ OVERLAY_FONT_THICKNESS = 2
 FILTER_VIDEO = "Video files (*.avi *.mp4)"
 CAM_FPS = 30
 CAM_IDX_RANGE = 4
-OUTPUT_FILE_EXT = ".mp4"
+OUTPUT_FILE_EXT = ".avi"

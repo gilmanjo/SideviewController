@@ -106,8 +106,14 @@ venv.bak/
 
 # Generated video files
 *.mp4
+*.avi
 
 # PyCharm directories
 .idea/
 venv/
 *.xml
+
+# PyInstaller directories
+build/
+distro/
+*.spec
