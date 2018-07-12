@@ -3,6 +3,7 @@ import svdevices
 from threadworker import Worker
 from ui import camdialog_ui, screendialog_ui, viewdialog_ui
 import cv2
+import PySpin
 from PyQt4 import QtGui, QtCore
 import time
 
@@ -56,6 +57,28 @@ class CamDialog(QtGui.QDialog, camdialog_ui.Ui_CamDialog):
                 continue
             cam_list.append("cam{}".format(x))
 
+        # Add FLIR cams
+        system = PySpin.System.GetInstance()
+        flir_cam_list = system.GetCameras()
+
+        for cam in flir_cam_list:
+
+            # Retrieve device ID
+            nodemap_tldevice = cam.GetTLDeviceNodeMap()
+            node_dev_info = PySpin.CCategoryPtr(nodemap_tldevice.GetNode(
+                "DeviceInformation"
+            ))
+            features = node_dev_info.GetFeatures()
+            for feature in features:
+                node_feature = PySpin.CValuePtr(feature)
+                if node_feature.GetName() == "DeviceID":
+                    cam_list.append(
+                        "FLIR cam {}".format(node_feature.ToString()))
+
+            del cam
+
+        flir_cam_list.Clear()
+        system.ReleaseInstance()
         return cam_list
 
     def refresh_gui(self):

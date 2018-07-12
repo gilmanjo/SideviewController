@@ -2,13 +2,14 @@ import constants
 import ctypes
 import customdialog
 import cv2
+import flircam
 import svdevices
 from threadworker import Worker
 from ui import mainwindow_ui
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from PyQt4 import QtGui, QtCore
 from PyQt4.phonon import Phonon
-import numpy as np
+import PySpin
 import sys
 import time
 
@@ -327,17 +328,28 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
             return
 
         # Convert array to pixmap
-        image = QtGui.QImage(
-            frame,
-            frame.shape[1],
-            frame.shape[0],
-            QtGui.QImage.Format_RGB888
-        ).rgbSwapped()
-        pixmap = QtGui.QPixmap.fromImage(image)
+        if len(frame.shape) == 3:
+            image = QtGui.QImage(
+                frame,
+                frame.shape[1],
+                frame.shape[0],
+                QtGui.QImage.Format_RGB888
+            ).rgbSwapped()
+            pixmap = QtGui.QPixmap.fromImage(image)
+
+        elif len(frame.shape) == 2:
+            image = QtGui.QImage(
+                frame,
+                frame.shape[1],
+                frame.shape[0],
+                QtGui.QImage.Format_Indexed8
+            )
+            pixmap = QtGui.QPixmap.fromImage(image)
 
         # set in dialog
         dialog.camFrame.setPixmap(pixmap)
 
+    # TODO: Cam freezes when running multiple cameras simultaneously
     def _handle_cam(self, cam, **kwargs):
         # Opens camera feed processing to be used in separate thread
         cap = cv2.VideoCapture(int(cam.link[3:]))
@@ -355,7 +367,7 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
 
                 # Initialize VideoWriter if recording starts
                 if self.state == constants.STATE_MW_RUN \
-                        and recording == False:
+                        and recording is False:
                     recording = True
                     output = self._get_video_writer(cam)
 
@@ -393,6 +405,81 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
         if output is not None:
             output.release()
 
+    def _handle_flir_cam(self, cam, **kwargs):
+        # Opens FLIR camera feed processing to be used in separate thread
+
+        # Get FLIR Camera object
+        flir_cam, cam_list, system = self._get_flir_cam(cam)
+
+        # Initialize camera
+        flir_cam.Init()
+
+        # Retrieve GenICam nodemap
+        nodemap = flir_cam.GetNodeMap()
+
+        # Configure image events
+        image_event_handler = flircam.ImageEventHandler(
+            flir_cam,
+            cam,
+            self.leOutput.text(),
+            kwargs["cb_obj_passback"]
+        )
+        flir_cam.RegisterEvent(image_event_handler)
+
+        # Set acquisition mode to continuous
+        node_acq_mode = PySpin.CEnumerationPtr(nodemap.GetNode(
+            "AcquisitionMode"))
+        node_acq_mode_cont = node_acq_mode.GetEntryByName("Continuous")
+        acq_mode_cont = node_acq_mode_cont.GetValue()
+        node_acq_mode.SetIntValue(acq_mode_cont)
+
+        # Begin collecting images
+        flir_cam.BeginAcquisition()
+
+        # Collect images as long as dialog is open
+        while cam.name in self.view_dialogs.keys():
+
+            # Initialize VideoWriter if recording starts
+            image_event_handler.rec_state = self.state
+
+        # End collection and reset image events
+        if image_event_handler.output is not None:
+            image_event_handler.output.release()
+        flir_cam.EndAcquisition()
+        flir_cam.UnregisterEvent(image_event_handler)
+
+        # De-initialize camera
+        flir_cam.DeInit()
+
+        # Clean up other objects that don't auto garbage-collect
+        del flir_cam
+        cam_list.Clear()
+        system.ReleaseInstance()
+
+    def _get_flir_cam(self, cam_obj):
+        # Takes data from Camera object to get a PySpin.Camera object
+        # Retrieve singleton reference to system object
+        system = PySpin.System.GetInstance()
+
+        # Retrieve list of cameras from the system
+        cam_list = system.GetCameras()
+
+        for i, flir_cam in enumerate(cam_list):
+
+            nodemap_tldevice = flir_cam.GetTLDeviceNodeMap()
+            node_device_information = PySpin.CCategoryPtr(
+                nodemap_tldevice.GetNode('DeviceInformation'))
+            features = node_device_information.GetFeatures()
+
+            for feature in features:
+
+                node_feature = PySpin.CValuePtr(feature)
+                if node_feature.GetName() == "DeviceID":
+
+                    match_str = "FLIR cam {}".format(node_feature.ToString())
+                    if match_str == cam_obj.link:
+                        return flir_cam, cam_list, system
+
     def _get_video_writer(self, cam):
         # Generates VideoWriter object for saving camera feed frames
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -413,6 +500,7 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
              int(cam.resolution.split("x")[1])),
             isColor=True
         )
+        print("VW")
         return output
 
     def _handle_video(self, media_obj, **kwargs):
@@ -662,8 +750,8 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
     def edit_cam(self):
         dialog = customdialog.CamDialog(constants.STATE_DIALOG_EDIT)
         cam_pos = self.lwCam.currentRow()
-        cam = self.screens[cam_pos]
-        self.screens.pop(cam_pos)
+        cam = self.cams[cam_pos]
+        self.cams.pop(cam_pos)
         dialog.populate(cam)
         if dialog.exec_():
             new_cam = svdevices.Camera(
@@ -691,7 +779,11 @@ class MainWindow(QtGui.QMainWindow, mainwindow_ui.Ui_MainWindow):
         self.refresh_tab_buts()
 
         # Start new thread
-        worker = Worker(self._handle_cam, cam)
+        if "FLIR" in cam.link:
+            worker = Worker(self._handle_flir_cam, cam)
+
+        else:
+            worker = Worker(self._handle_cam, cam)
         worker.signals.obj_passback.connect(self._paint_cam_frame)
         self.threadpool.start(worker)
 

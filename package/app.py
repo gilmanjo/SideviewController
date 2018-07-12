@@ -1,6 +1,7 @@
 import constants
 from package.mainwindow import MainWindow
 from PyQt4 import QtGui
+import qdarkstyle
 import sys
 
 
@@ -9,6 +10,7 @@ def main():
     app.setWindowIcon(
         QtGui.QIcon(constants.DIR_ICON + constants.ICON_LOGO_SMALL)
     )
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt())
     main_win = MainWindow()
     sys.exit(app.exec_())
 
