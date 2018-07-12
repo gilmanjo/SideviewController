@@ -1,0 +1,1 @@
+pyinstaller -n "SideviewController" --noconsole --icon=icon.ico --add-binary C:\Users\Jordan\AppData\Roaming\Python\Python27\site-packages\cv2\opencv_ffmpeg341_64.dll main.py
